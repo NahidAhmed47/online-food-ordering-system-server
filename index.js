@@ -8,7 +8,7 @@ app.use(cors())
 app.use(express.json());
 
 app.get('/', (req, res) => {
-    res.send('Server is running')
+  res.send('Server is running')
 })
 
 
@@ -31,13 +31,25 @@ async function run() {
     const ordersCollection = database.collection("orders");
     // get all menu
     app.get('/menu', async (req, res) => {
-        const result = await menuCollection.find().toArray();
-        res.send(result);
+      const result = await menuCollection.find().toArray();
+      res.send(result);
     })
     // set order
-    app.post('/order', async (req, res) => {
+    app.put('/order', async (req, res) => {
+      const checkIfExists = await ordersCollection.findOne({ foodId: req.body.foodId });
+      if (checkIfExists) {
+        const updatedOrder = await ordersCollection.updateOne({ foodId: req.body.foodId }, { $set: { price: checkIfExists.price + req.body.price, quantity: checkIfExists.quantity + req.body.quantity } });
+        res.send(updatedOrder);
+      }
+      else {
         const result = await ordersCollection.insertOne(req.body);
         res.send(result);
+      }
+    })
+    // get all orders
+    app.get('/orders', async (req, res) => {
+      const result = await ordersCollection.find().toArray();
+      res.send(result);
     })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
@@ -51,5 +63,5 @@ run().catch(console.dir);
 
 
 app.listen(port, () => {
-    console.log(`server running on port ${port}`);
+  console.log(`server running on port ${port}`);
 })
