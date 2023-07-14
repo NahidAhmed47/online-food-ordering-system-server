@@ -28,9 +28,15 @@ async function run() {
   try {
     const database = client.db("online-food-order-system");
     const menuCollection = database.collection("menu");
+    const ordersCollection = database.collection("orders");
     // get all menu
     app.get('/menu', async (req, res) => {
         const result = await menuCollection.find().toArray();
+        res.send(result);
+    })
+    // set order
+    app.post('/order', async (req, res) => {
+        const result = await ordersCollection.insertOne(req.body);
         res.send(result);
     })
     // Send a ping to confirm a successful connection
