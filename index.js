@@ -29,16 +29,32 @@ async function run() {
     const database = client.db("online-food-order-system");
     const menuCollection = database.collection("menu");
     const ordersCollection = database.collection("orders");
-    // get all menu
+    // get menu
     app.get('/menu', async (req, res) => {
-      const result = await menuCollection.find().toArray();
+      const limit = req.query.limit ? parseInt(req.query.limit) : 0;
+      const result = await menuCollection.find().limit(limit).toArray();
       res.send(result);
     })
     // set order
     app.put('/order', async (req, res) => {
-      const checkIfExists = await ordersCollection.findOne({ foodId: req.body.foodId });
+      const checkIfExists = await ordersCollection.findOne({
+        $and: [
+          { customerId: req.body.customerId },
+          { foodId: req.body.foodId }
+        ]
+      });
       if (checkIfExists) {
-        const updatedOrder = await ordersCollection.updateOne({ foodId: req.body.foodId }, { $set: { price: checkIfExists.price + req.body.price, quantity: checkIfExists.quantity + req.body.quantity } });
+        const updatedOrder = await ordersCollection.updateOne({
+          $and: [
+            { customerId: req.body.customerId },
+            { foodId: req.body.foodId }
+          ]
+        }, { 
+          $set: { 
+            price: checkIfExists.price + req.body.price, quantity: 
+            checkIfExists.quantity + req.body.quantity 
+          } 
+        });
         res.send(updatedOrder);
       }
       else {
@@ -47,8 +63,8 @@ async function run() {
       }
     })
     // get all orders
-    app.get('/orders', async (req, res) => {
-      const result = await ordersCollection.find().toArray();
+    app.get('/orders/:id', async (req, res) => {
+      const result = await ordersCollection.find({ customerId: parseInt(req.params.id) }).toArray();
       res.send(result);
     })
     // Send a ping to confirm a successful connection
